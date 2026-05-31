@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+streamlit
+sqlalchemy
+pydantic
+pydantic-settings
+google-generativeai
+chromadb
+networkx
+python-dotenv
+pandas
