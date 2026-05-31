@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  AI-Sales-Assistants:
+    build: .
+    container_name: AI-Sales-Assistants
+    env_file:
+      - .env
+    ports:
+      - "8081:8081"
+    volumes:
+      - .:/app
+      
+    
