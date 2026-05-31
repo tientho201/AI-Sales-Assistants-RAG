@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     GRAPH_TOP_K: int = os.getenv("GRAPH_TOP_K", 5)
     TOP_K_HYBRID_RETRIEVER: int = os.getenv("TOP_K_HYBRID_RETRIEVER", 5)
 
+    DATABASE_URL: str = os.getenv(
+        "DATABASE_URL", "sqlite:///./sales_assistant.db"
+    )
+
     # Set model config
     model_config = SettingsConfigDict(
         env_file=".env",

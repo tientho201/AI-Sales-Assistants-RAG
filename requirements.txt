@@ -9,3 +9,6 @@ chromadb
 networkx
 python-dotenv
 pandas
+qdrant-client
+neo4j
+sqlalchemy 
