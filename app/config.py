@@ -1,44 +1,41 @@
 """
-Init app config
+Application configurations using Pydantic settings.
 """
-
 import os
-from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-load_dotenv()
-
-
 class Settings(BaseSettings):
-    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
-    OPENAI_EMBEDDING_MODEL: str = os.getenv(
-        "OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
-    OPENAI_CHAT_MODEL: str = os.getenv(
-        "OPENAI_CHAT_MODEL", "gpt-4o-mini")
+    # OpenAI configurations
+    OPENAI_API_KEY: str = ""
+    OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
+    OPENAI_CHAT_MODEL: str = "gpt-4o-mini"
 
-    QDRANT_URL: str = os.getenv("QDRANT_URL", "")
-    QDRANT_API_KEY: str = os.getenv("QDRANT_API_KEY", "")
-    QDRANT_COLLECTION_NAME: str = os.getenv("QDRANT_COLLECTION_NAME", "")
-    EMBEDDING_DIMENSION: int = os.getenv("EMBEDDING_DIMENSION", 1536)
+    # PostgreSQL/SQLite database configuration
+    DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/sales_copilot"
 
-    NEO4J_URI: str = os.getenv("NEO4J_URI", "")
-    NEO4J_USERNAME: str = os.getenv("NEO4J_USERNAME", "")
-    NEO4J_PASSWORD: str = os.getenv("NEO4J_PASSWORD", "")
+    # Qdrant Vector database configurations
+    QDRANT_URL: str = "http://localhost:6333"
+    QDRANT_API_KEY: str = ""
+    QDRANT_COLLECTION_NAME: str = "truck_products"
+    EMBEDDING_DIMENSION: int = 1536
 
-    VECTOR_TOP_K: int = os.getenv("VECTOR_TOP_K", 5)
-    GRAPH_TOP_K: int = os.getenv("GRAPH_TOP_K", 5)
-    TOP_K_HYBRID_RETRIEVER: int = os.getenv("TOP_K_HYBRID_RETRIEVER", 5)
+    # Neo4j Graph database configurations
+    NEO4J_URI: str = "bolt://localhost:7687"
+    NEO4J_USERNAME: str = "neo4j"
+    NEO4J_PASSWORD: str = "password"
 
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL", "sqlite:///./sales_assistant.db"
-    )
+    # Retrieval configurations
+    VECTOR_TOP_K: int = 5
+    GRAPH_TOP_K: int = 5
+    TOP_K_HYBRID_RETRIEVER: int = 3
 
-    # Set model config
+    # Application Port
+    PORT: int = 8081
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        extra="ignore",
+        extra="ignore"
     )
-
 
 settings = Settings()
