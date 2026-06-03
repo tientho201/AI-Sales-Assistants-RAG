@@ -23,6 +23,7 @@ def post_feedback_endpoint(payload: FeedbackRequest, db: Session = Depends(get_d
         # Invoke FeedbackAgent to record in DB
         result = feedback_agent.run(
             session_id=payload.session_id,
+            message_id=payload.message_id,
             product_id=payload.product_id,
             feedback_type=payload.feedback_type,
             comment=payload.comment

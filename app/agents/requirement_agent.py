@@ -47,17 +47,45 @@ class RequirementExtractionAgent:
         Bạn là chuyên gia trích xuất thực thể. Nhiệm vụ của bạn là đọc tin nhắn của khách hàng muốn mua xe tải/xe van thương mại và trích xuất các nhu cầu mua xe thành định dạng JSON.
         
         Các trường cần trích xuất (nếu không có thì trả về null):
-        - budget: Số tiền tối đa khách hàng muốn bỏ ra (Đơn vị: TRIỆU VND). Hãy chuyển các từ như "500 triệu", "500tr", "nửa tỷ" thành số float 500.0.
-        - payload: Tải trọng xe mong muốn (Đơn vị: KG). Hãy quy đổi "1 tấn" = 1000.0, "900kg" = 900.0, "2.5 tấn" = 2500.0.
+        - customer_id: Mã định danh khách hàng nếu có nhắc đến (ví dụ: "Tuấn", "Linh").
+        - budget_min: Số tiền tối thiểu khách hàng muốn bỏ ra (Đơn vị: TRIỆU VND). Ví dụ: "tầm 400 đến 500 triệu" -> budget_min là 400.0.
+        - budget_max: Số tiền tối đa khách hàng muốn bỏ ra (Đơn vị: TRIỆU VND). Ví dụ: "dưới 500 triệu", "khoảng 500tr" -> budget_max là 500.0.
+        - payload_min: Tải trọng xe tối thiểu mong muốn (Đơn vị: KG). Ví dụ: "chở hàng tầm 1.5 - 2 tấn" -> payload_min là 1500.0.
+        - payload_max: Tải trọng xe tối đa mong muốn (Đơn vị: KG). Ví dụ: "xe dưới 2.5 tấn" -> payload_max là 2500.0, "tải trọng 1 tấn" -> payload_max là 1000.0.
         - fuel_type: Loại nhiên liệu. Chỉ trả về một trong các giá trị sau: 'Xăng', 'Dầu', 'Điện'.
         - vehicle_type: Loại xe. Chỉ trả về một trong các giá trị sau: 'Van', 'Xe tải nhẹ', 'Xe tải nặng'.
         - use_case: Mục đích sử dụng. Ví dụ: 'Nội thành', 'Đường dài', 'Chở hàng chợ', 'Vận chuyển liên tỉnh'.
-        - location: Địa điểm vận hành của xe. Ví dụ: 'Hà Nội', 'TP.HCM', 'Miền Tây'.
+        - location: Địa điểm vận hành của xe. Ví dụ: 'Hà Nội', 'TP.HCM'.
         - cargo_type: Loại hàng hóa cần chở. Ví dụ: 'Hàng đông lạnh', 'Đồ khô', 'Nội thất', 'Rau củ'.
+        - preferred_brand: Thương hiệu xe ưa thích (ví dụ: 'Isuzu', 'Suzuki', 'Hyundai', 'Thaco', 'Teraco', 'JAC').
+        - financing_required: Khách hàng có cần hỗ trợ trả góp/vay vốn không. Trả về true hoặc false (hoặc null nếu không đề cập).
+        - urgency: Mức độ gấp gáp của nhu cầu mua xe. Chỉ trả về một trong các giá trị: 'low', 'medium', 'high', 'urgent'.
+        - contact_name: Tên khách hàng (nếu khách hàng xưng tên).
+        - contact_phone: Số điện thoại (nếu khách hàng cung cấp).
+        - contact_email: Email (nếu khách hàng cung cấp).
+        - profile_confidence: Điểm số tin cậy tự đánh giá cho việc trích xuất này (float từ 0.0 đến 1.0).
 
         Hãy trả về DUY NHẤT một chuỗi JSON hợp lệ, không bọc trong ```json ```, không kèm theo giải thích.
         Ví dụ phản hồi:
-        {"budget": 500.0, "payload": 950.0, "fuel_type": "Xăng", "vehicle_type": "Van", "use_case": "Nội thành", "location": "Hà Nội", "cargo_type": "Đồ khô"}
+        {
+            "customer_id": null,
+            "budget_min": 400.0,
+            "budget_max": 500.0,
+            "payload_min": 1000.0,
+            "payload_max": 2000.0,
+            "fuel_type": "Dầu",
+            "vehicle_type": "Xe tải nhẹ",
+            "use_case": "Đường dài",
+            "location": "Hà Nội",
+            "cargo_type": "Nội thất",
+            "preferred_brand": "Isuzu",
+            "financing_required": true,
+            "urgency": "high",
+            "contact_name": "Tuấn",
+            "contact_phone": "0912345678",
+            "contact_email": null,
+            "profile_confidence": 0.95
+        }
         """
         
         response = self.client.chat.completions.create(
@@ -90,50 +118,56 @@ class RequirementExtractionAgent:
         Guarantees 100% offline accuracy for standardized test messages.
         """
         result = {
-            "budget": None,
-            "payload": None,
+            "customer_id": None,
+            "budget_min": None,
+            "budget_max": None,
+            "payload_min": None,
+            "payload_max": None,
             "fuel_type": None,
             "vehicle_type": None,
             "use_case": None,
             "location": None,
-            "cargo_type": None
+            "cargo_type": None,
+            "preferred_brand": None,
+            "financing_required": None,
+            "urgency": None,
+            "contact_name": None,
+            "contact_phone": None,
+            "contact_email": None,
+            "profile_confidence": 0.8
         }
         
         text_lower = text.lower()
         
         # 1. Extract budget (triệu VND)
-        # matches: "dưới 500 triệu", "tầm 300 triệu", "khoảng 400tr", "dưới 500tr"
         budget_match = re.search(r'(?:dưới|tầm|khoảng|dưới\s*|dưới\s*mức\s*)(\d+)\s*(?:triệu|tr)', text_lower)
         if budget_match:
-            result["budget"] = float(budget_match.group(1))
+            result["budget_max"] = float(budget_match.group(1))
         else:
-            # Fallback to direct number with triệu/tr (e.g. "300 triệu", "300tr")
             direct_match = re.search(r'(\d+(?:\.\d+)?)\s*(?:triệu|tr)', text_lower)
             if direct_match:
-                result["budget"] = float(direct_match.group(1))
+                result["budget_max"] = float(direct_match.group(1))
         
         if "nửa tỷ" in text_lower:
-            result["budget"] = 500.0
+            result["budget_max"] = 500.0
             
         # 2. Extract payload (kg)
-        # matches: "tải trên 900kg", "tải 950kg", "1 tấn", "1.5 tấn", "1.5t", "1t"
         payload_match = re.search(r'(?:tải|tải\s*trọng|chở|chở\s*nặng)\s*(?:trên\s*|dưới\s*|khoảng\s*)?(\d+(?:\.\d+)?)\s*(kg|tấn|tân|t)', text_lower)
         if payload_match:
             val = float(payload_match.group(1))
             unit = payload_match.group(2)
             if unit in ["tấn", "tân", "t"]:
-                result["payload"] = val * 1000.0
+                result["payload_min"] = val * 1000.0
             else:
-                result["payload"] = val
+                result["payload_min"] = val
         else:
-            # check simple "1 tấn", "2 tấn"
             tons_match = re.search(r'(\d+(?:\.\d+)?)\s*tấn', text_lower)
             if tons_match:
-                result["payload"] = float(tons_match.group(1)) * 1000.0
+                result["payload_min"] = float(tons_match.group(1)) * 1000.0
             else:
                 kg_match = re.search(r'(\d+)\s*kg', text_lower)
                 if kg_match:
-                    result["payload"] = float(kg_match.group(1))
+                    result["payload_min"] = float(kg_match.group(1))
 
         # 3. Extract fuel type
         if "xăng" in text_lower or "petrol" in text_lower:

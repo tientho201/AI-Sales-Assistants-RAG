@@ -59,7 +59,7 @@ def save_requirements(db: Session, session_id: str, data: Dict[str, Any]) -> Cus
             f"Creating new extracted requirements row for session: {session_id}")
         req = CustomerProfile(
             session_id=session_id,
-            customer_id=data.get("customer_id"),
+            customer_id=data.get("customer_id") or f"cust_{session_id}",
             budget_min=data.get("budget_min"),
             budget_max=data.get("budget_max"),
             payload_min=data.get("payload_min"),
@@ -84,7 +84,8 @@ def save_requirements(db: Session, session_id: str, data: Dict[str, Any]) -> Cus
     else:
         logger.info(
             f"Updating existing requirements row for session: {session_id}")
-        req.customer_id = data.get("customer_id")
+        req.customer_id = data.get(
+            "customer_id") or req.customer_id or f"cust_{session_id}"
         req.budget_min = data.get("budget_min")
         req.budget_max = data.get("budget_max")
         req.payload_min = data.get("payload_min")
